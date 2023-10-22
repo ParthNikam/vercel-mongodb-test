@@ -1,75 +1,41 @@
-import Head from 'next/head'
-import Link from 'next/link'
-import clientPromise from '../lib/mongodb'
-import type { InferGetServerSidePropsType, GetServerSideProps } from 'next'
-import { useEffect, useState } from 'react';
-
+import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
 
 type Restaurant = {
   _id: string;
   name: string;
   cuisine: string;
+  borough: string;
 };
 
-export default function Home({
-  isConnected,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function RestaurantDetail() {
+  const router = useRouter();
+  const { restaurant_id } = router.query; // Extract the restaurant ID from the route query
 
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  useEffect(()=>{
-    (async ()=>{
-      const results = await fetch('api/list');
-      const resultsJson = await results.json();
-      setRestaurants(resultsJson);
-    })();
-  }, [restaurants]);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
 
+  useEffect(() => {
+    // Fetch restaurant details based on the extracted ID
+    if (restaurant_id) {
+      fetch(`/api/restaurant/${restaurant_id}`)
+        .then((response) => response.json())
+        .then((data) => setRestaurant(data))
+        .catch((error) => console.error(error));
+    }
+  }, [restaurant_id]);
 
   return (
     <div className="container">
-      <Head>
-        <title>Next.js App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Restaurant App</a>
-        </h1>
-
-        {isConnected ? (
-          <h2 className="subtitle">You are connected to MongoDB</h2>
-        ) : (
-          <h2 className="subtitle">
-            You are NOT connected to MongoDB. Check the <code>README.md</code>{' '}
-            for instructions.
-          </h2>
-        )}
-
-
-        <div className="grid">
-          {restaurants.map((restaurant) => (
-            <div className="card" key={restaurant._id}>
-                <a href={`/${restaurant._id}`}>
-                  <h2>{restaurant.name}</h2>
-                  <p>{restaurant.cuisine}</p>
-                </a>
-              </div>
-          ))}
+      <h1>Restaurant Detail Page</h1>
+      {restaurant ? (
+        <div className="card">
+          <h2>{restaurant.name}</h2>
+          <p>Cuisine: {restaurant.cuisine}</p>
+          <p>Town: {restaurant.borough}</p>
         </div>
-        
-      </main>
-
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
-        </a>
-      </footer>
+      ) : (
+        <p>Loading...</p>
+      )}
 
       <style jsx>{`
         .container {
@@ -221,26 +187,5 @@ export default function Home({
         }
       `}</style>
     </div>
-  )
-}
-
-
-type ConnectionStatus = {
-  isConnected: boolean
-}
-
-export const getServerSideProps: GetServerSideProps<
-  ConnectionStatus
-> = async () => {
-  try {
-    await clientPromise
-    return {
-      props: { isConnected: true },
-    }
-  } catch (e) {
-    console.error(e)
-    return {
-      props: { isConnected: false },
-    }
-  }
+  );
 }
