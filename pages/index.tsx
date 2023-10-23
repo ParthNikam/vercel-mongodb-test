@@ -16,6 +16,10 @@ export default function Home({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<Restaurant[]>([]);
+
+
   useEffect(()=>{
     (async ()=>{
       const results = await fetch('api/list');
@@ -24,6 +28,19 @@ export default function Home({
     })();
   }, [restaurants]);
 
+
+  // Function to handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Filter restaurants based on the search query
+    const filteredRestaurants = restaurants.filter((restaurant) =>
+      restaurant.name.toLowerCase().includes(query.toLowerCase())
+    );
+
+    setSearchResults(filteredRestaurants);
+  };
 
   return (
     <div className="container">
@@ -37,25 +54,27 @@ export default function Home({
           Welcome to <a href="https://nextjs.org">Restaurant App</a>
         </h1>
 
-        {isConnected ? (
-          <h2 className="subtitle">You are connected to MongoDB</h2>
-        ) : (
-          <h2 className="subtitle">
-            You are NOT connected to MongoDB. Check the <code>README.md</code>{' '}
-            for instructions.
-          </h2>
-        )}
-
-
-        <div className="grid">
-          {restaurants.map((restaurant) => (
-            <div className="card" key={restaurant._id}>
-                <a href={`/${restaurant._id}`}>
-                  <h2>{restaurant.name}</h2>
-                  <p>{restaurant.cuisine}</p>
-                </a>
-              </div>
-          ))}
+         {/* Add the search bar */}
+         <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search restaurants"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+          {searchResults.length > 0 && (
+            <div className="search-results">
+              <ul>
+                {searchResults.map((restaurant) => (
+                  <li key={restaurant._id}>
+                    <a href={`/${restaurant._id}`}>
+                      <h2>{restaurant.name}</h2>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         
       </main>
@@ -128,7 +147,7 @@ export default function Home({
         .title {
           margin: 0;
           line-height: 1.15;
-          font-size: 4rem;
+          font-size: 3rem;
         }
 
         .title,
