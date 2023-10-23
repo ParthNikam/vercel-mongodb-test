@@ -1,9 +1,8 @@
-import Head from 'next/head'
-import Link from 'next/link'
-import clientPromise from '../lib/mongodb'
-import type { InferGetServerSidePropsType, GetServerSideProps } from 'next'
-import { useEffect, useState } from 'react';
-
+import Head from "next/head";
+import Link from "next/link";
+import clientPromise from "../lib/mongodb";
+import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
+import { useEffect, useState } from "react";
 
 type Restaurant = {
   _id: string;
@@ -14,32 +13,33 @@ type Restaurant = {
 export default function Home({
   isConnected,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-
+  
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Restaurant[]>([]);
 
-
-  useEffect(()=>{
-    (async ()=>{
-      const results = await fetch('api/list');
+  useEffect(() => {
+    (async () => {
+      const results = await fetch(`api/list`);
       const resultsJson = await results.json();
       setRestaurants(resultsJson);
     })();
-  }, [restaurants]);
-
+  }, []); // Remove [restaurants] as a dependency to avoid infinite re-fetching
 
   // Function to handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
-    // Filter restaurants based on the search query
-    const filteredRestaurants = restaurants.filter((restaurant) =>
-      restaurant.name.toLowerCase().includes(query.toLowerCase())
-    );
 
-    setSearchResults(filteredRestaurants);
+    // If the query is empty, clear the search results
+    if (query === "") {
+      setSearchResults([]);
+    } else {
+      const searchResults = restaurants.filter((restaurant) =>
+        restaurant.name.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(searchResults);
+    }
   };
 
   return (
@@ -54,8 +54,8 @@ export default function Home({
           Welcome to <a href="https://nextjs.org">Restaurant App</a>
         </h1>
 
-         {/* Add the search bar */}
-         <div className="search-container">
+        {/* Add the search bar */}
+        <div className="search-container">
           <input
             type="text"
             placeholder="Search restaurants"
@@ -76,7 +76,6 @@ export default function Home({
             </div>
           )}
         </div>
-        
       </main>
 
       <footer>
@@ -85,7 +84,7 @@ export default function Home({
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by{" "}
           <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
         </a>
       </footer>
@@ -240,26 +239,25 @@ export default function Home({
         }
       `}</style>
     </div>
-  )
+  );
 }
-
 
 type ConnectionStatus = {
-  isConnected: boolean
-}
+  isConnected: boolean;
+};
 
 export const getServerSideProps: GetServerSideProps<
   ConnectionStatus
 > = async () => {
   try {
-    await clientPromise
+    await clientPromise;
     return {
       props: { isConnected: true },
-    }
+    };
   } catch (e) {
-    console.error(e)
+    console.error(e);
     return {
       props: { isConnected: false },
-    }
+    };
   }
-}
+};
